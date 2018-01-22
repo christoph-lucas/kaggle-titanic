@@ -1,0 +1,26 @@
+train_set.hist(bins=50, figsize=(20,15))
+
+train_set.plot(kind="box", x="Survived", y="Age")
+mosaic(train_set, ['Sex', 'Survived'])
+
+train_set.describe()
+train_set["Embarked"].unique()
+train_set.head()
+train_set.info()
+
+
+pd.DataFrame(test_set_prepared).describe()
+
+
+from IPython.core.debugger import set_trace
+set_trace()
+
+
+# class FixedLabelBinarizer(TransformerMixin, BaseEstimator):
+#     def fit(self, X, y = 0):
+#         return self
+#     def transform(self, X, y = 0):
+#         encoder = LabelBinarizer();
+#         result = encoder.fit_transform(X)
+#         return result;
+
