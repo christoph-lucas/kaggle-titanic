@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import Imputer, LabelBinarizer, StandardScaler
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -89,36 +90,47 @@ class CabinTransformer(BaseEstimator, TransformerMixin):
     def get_classes(self):
         return list(self.encoder.classes_) + ["cabin_number", "n_cabins"]
 
+class OrdinalTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, ranges):
+        self.ranges = ranges
+    def fit(self, X, y=None):
+        return self
+    def transform(self, X):
+        res = pd.cut(X[:, 0], self.ranges, labels=list(range(len(self.ranges)-1)))
+        return np.array([np.transpose(res.get_values())]).transpose()
 
 class FeatureExtractor:
 
-    def __init__(self):
-        # self.num_attribs = ["Age", "SibSp", "Parch", "Fare"]
-        self.num_attribs = ["Age", "Fare"]
-
     def get_attributes(self):
-        attributes = self.num_attribs + \
-                     ['FamilySize'] + \
+        attributes = ['FamilySize'] + \
                      ['IsAlone'] + \
+                     ['AgeCat'] + \
+                     ['FareCat'] + \
                      list(self.class_encoder.classes_) + \
                      list(self.sex_encoder.classes_) + \
                      list(self.embarked_encoder.classes_) + \
                      self.cabin_transformer.get_classes()
-        return
+        return attributes
 
     def get_feature_union(self):
-        num_pipeline = Pipeline([
-            ('selector', DataFrameSelector(self.num_attribs)),
-            ('imputer', Imputer(strategy="median")),
-            ('std_scaler', StandardScaler())
-        ])
-
         family_size_pipeline = Pipeline([
             ('sum', Summation('SibSp', 'Parch', 1)),
         ])
 
         is_alone_pipeline = Pipeline([
             ('alone', IsAlone()),
+        ])
+
+        age_pipeline = Pipeline([
+            ('selector', DataFrameSelector(["Age"])),
+            ('imputer', Imputer(strategy="median")),
+            ('age_ordinal', OrdinalTransformer([0, 16, 32, 48, 64, 100]))
+        ])
+
+        fare_pipeline = Pipeline([
+            ('selector', DataFrameSelector(["Fare"])),
+            ('imputer', Imputer(strategy="median")),
+            ('age_ordinal', OrdinalTransformer([-1, 7.91, 14.454, 31, 600]))
         ])
 
         # cat_attribs = ["Pclass", "Sex", "Embarked"]
@@ -149,9 +161,10 @@ class FeatureExtractor:
         ])
 
         combined_features = FeatureUnion(transformer_list=[
-            ("num_pipeline", num_pipeline),
             ("family_size_pipeline", family_size_pipeline),
             ("is_alone_pipeline", is_alone_pipeline),
+            ("age_pipeline", age_pipeline),
+            ("fare_pipeline", fare_pipeline),
             ("class_pipeline", class_pipeline),
             ("sex_pipeline", sex_pipeline),
             ("embarked_pipeline", embarked_pipeline),

@@ -11,8 +11,6 @@ def split_train_test(data, test_ratio):
     train_indices = shuffled_indices[test_set_size:]
     return data.iloc[train_indices], data.iloc[test_indices]
 
-
-
 def unwrap_labels(input):
     result = []
     for row in input:
