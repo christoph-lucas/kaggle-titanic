@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import re
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import Imputer, LabelBinarizer, StandardScaler
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -99,6 +100,26 @@ class OrdinalTransformer(BaseEstimator, TransformerMixin):
         res = pd.cut(X[:, 0], self.ranges, labels=list(range(len(self.ranges)-1)))
         return np.array([np.transpose(res.get_values())]).transpose()
 
+def get_title(name):
+    title_search = re.search(' ([A-Za-z]+)\.', name)
+    # If the title exists, extract and return it.
+    if title_search:
+        return title_search.group(1)
+    return ""
+
+class NameToTitleTransformer(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+    def transform(self, X):
+        titles = X['Name'].apply(get_title)
+
+        titles = titles.replace(["Capt", "Col", "Major"], "military")
+        titles = titles.replace(["Countess", "Jonkheer", "Sir"], "nobility")
+        titles = titles.replace(["Mlle", "Ms"], "Miss")
+        titles = titles.replace(["Mme", "Lady"], "Mrs")
+
+        return np.array([titles])[0,:]
+
 class FeatureExtractor:
 
     def get_attributes(self):
@@ -106,6 +127,7 @@ class FeatureExtractor:
                      ['IsAlone'] + \
                      ['AgeCat'] + \
                      ['FareCat'] + \
+                     list(self.title_encoder.classes_) + \
                      list(self.class_encoder.classes_) + \
                      list(self.sex_encoder.classes_) + \
                      list(self.embarked_encoder.classes_) + \
@@ -123,6 +145,12 @@ class FeatureExtractor:
             ('selector', DataFrameSelector(["Fare"])),
             ('imputer', Imputer(strategy="median")),
             ('age_ordinal', OrdinalTransformer([-1, 7.91, 14.454, 31, 600]))
+        ])
+
+        self.title_encoder = PipelineLabelBinarizer()
+        title_pipeline = Pipeline([
+            ('title_extractor', NameToTitleTransformer()),
+            ('label_binarizer', self.title_encoder)
         ])
 
         # cat_attribs = ["Pclass", "Sex", "Embarked"]
@@ -157,6 +185,7 @@ class FeatureExtractor:
             ("is_alone", IsAlone()),
             ("age", age_pipeline),
             ("fare", fare_pipeline),
+            ("title", title_pipeline),
             ("class", class_pipeline),
             ("sex", sex_pipeline),
             ("embarked", embarked_pipeline),
