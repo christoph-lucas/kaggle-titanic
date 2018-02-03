@@ -113,14 +113,6 @@ class FeatureExtractor:
         return attributes
 
     def get_feature_union(self):
-        family_size_pipeline = Pipeline([
-            ('sum', Summation('SibSp', 'Parch', 1)),
-        ])
-
-        is_alone_pipeline = Pipeline([
-            ('alone', IsAlone()),
-        ])
-
         age_pipeline = Pipeline([
             ('selector', DataFrameSelector(["Age"])),
             ('imputer', Imputer(strategy="median")),
@@ -161,14 +153,14 @@ class FeatureExtractor:
         ])
 
         combined_features = FeatureUnion(transformer_list=[
-            ("family_size_pipeline", family_size_pipeline),
-            ("is_alone_pipeline", is_alone_pipeline),
-            ("age_pipeline", age_pipeline),
-            ("fare_pipeline", fare_pipeline),
-            ("class_pipeline", class_pipeline),
-            ("sex_pipeline", sex_pipeline),
-            ("embarked_pipeline", embarked_pipeline),
-            ("cabin_pipeline", cabin_pipeline)
+            ("family_size", Summation('SibSp', 'Parch', 1)),
+            ("is_alone", IsAlone()),
+            ("age", age_pipeline),
+            ("fare", fare_pipeline),
+            ("class", class_pipeline),
+            ("sex", sex_pipeline),
+            ("embarked", embarked_pipeline),
+            ("cabin", cabin_pipeline)
         ])
 
         return combined_features;
