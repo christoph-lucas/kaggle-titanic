@@ -1,0 +1,5 @@
+- Use better models, eg.XGBoost
+- more features (has_cabin, name_length)
+- drop male column
+
+- Plotting Ÿben
