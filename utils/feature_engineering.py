@@ -122,6 +122,9 @@ class NameToTitleTransformer(BaseEstimator, TransformerMixin):
 
 class FeatureExtractor:
 
+    def __init__(self, useOrdinals=True):
+        self.useOrdinals = useOrdinals
+
     def get_attributes(self):
         attributes = ['FamilySize'] + \
                      ['IsAlone'] + \
@@ -135,17 +138,29 @@ class FeatureExtractor:
         return attributes
 
     def get_feature_union(self):
-        age_pipeline = Pipeline([
-            ('selector', DataFrameSelector(["Age"])),
-            ('imputer', Imputer(strategy="median")),
-            ('age_ordinal', OrdinalTransformer([0, 16, 32, 48, 64, 100]))
-        ])
 
-        fare_pipeline = Pipeline([
-            ('selector', DataFrameSelector(["Fare"])),
-            ('imputer', Imputer(strategy="median")),
-            ('fare_ordinal', OrdinalTransformer([-1, 7.91, 14.454, 31, 600]))
-        ])
+        if (self.useOrdinals):
+            age_pipeline = Pipeline([
+                ('selector', DataFrameSelector(["Age"])),
+                ('imputer', Imputer(strategy="median")),
+                ('age_ordinal', OrdinalTransformer([0, 16, 32, 48, 64, 100]))
+            ])
+            fare_pipeline = Pipeline([
+                ('selector', DataFrameSelector(["Fare"])),
+                ('imputer', Imputer(strategy="median")),
+                ('fare_ordinal', OrdinalTransformer([-1, 7.91, 14.454, 31, 600]))
+            ])
+        else:
+            age_pipeline = Pipeline([
+                ('selector', DataFrameSelector(["Age"])),
+                ('imputer', Imputer(strategy="median")),
+                ('std_scaler', StandardScaler())
+            ])
+            fare_pipeline = Pipeline([
+                ('selector', DataFrameSelector(["Fare"])),
+                ('imputer', Imputer(strategy="median")),
+                ('std_scaler', StandardScaler())
+            ])
 
         self.title_encoder = PipelineLabelBinarizer()
         title_pipeline = Pipeline([
