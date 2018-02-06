@@ -144,7 +144,7 @@ class FeatureExtractor:
         fare_pipeline = Pipeline([
             ('selector', DataFrameSelector(["Fare"])),
             ('imputer', Imputer(strategy="median")),
-            ('age_ordinal', OrdinalTransformer([-1, 7.91, 14.454, 31, 600]))
+            ('fare_ordinal', OrdinalTransformer([-1, 7.91, 14.454, 31, 600]))
         ])
 
         self.title_encoder = PipelineLabelBinarizer()
